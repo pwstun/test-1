@@ -1,3 +1,0 @@
-<h1>HOLA MUNDO</h1>
-
-<h2>COMO YO QUIERO</h2>
