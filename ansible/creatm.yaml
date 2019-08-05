@@ -1,0 +1,65 @@
+---
+
+- name: Create Azure VM
+  hosts: localhost
+  connection: local
+  tasks:
+  - name: Create resource group
+    azure_rm_resourcegroup:
+      name: myResourceGroup
+      location: eastus
+  - name: Create virtual network
+    azure_rm_virtualnetwork:
+      resource_group: myResourceGroup
+      name: myVnet
+      address_prefixes: "10.0.0.0/16"
+  - name: Add subnet
+    azure_rm_subnet:
+      resource_group: myResourceGroup
+      name: mySubnet
+      address_prefix: "10.0.1.0/24"
+      virtual_network: myVnet
+  - name: Create public IP address
+    azure_rm_publicipaddress:
+      resource_group: myResourceGroup
+      allocation_method: Static
+      name: myPublicIP
+    register: output_ip_address
+  - name: Dump public IP for VM which will be created
+    debug:
+      msg: "The public IP is {{ output_ip_address.state.ip_address }}."
+  - name: Create Network Security Group that allows SSH
+    azure_rm_securitygroup:
+      resource_group: myResourceGroup
+      name: myNetworkSecurityGroup
+      rules:
+        - name: SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 1001
+          direction: Inbound
+  - name: Create virtual network interface card
+    azure_rm_networkinterface:
+      resource_group: myResourceGroup
+      name: myNIC
+      virtual_network: myVnet
+      subnet: mySubnet
+      public_ip_name: myPublicIP
+      security_group: myNetworkSecurityGroup
+  - name: Create VM
+    azure_rm_virtualmachine:
+      resource_group: myResourceGroup
+      name: myVM
+      vm_size: Standard_DS1_v2
+      admin_username: alexis
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: /home/alexis/.ssh/authorized_keys/azvm.pub
+          key_data: <ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD1SKZhagVX/YfsVobfohAU8eEUVZxOzzCRL7zaARn4hrUkiIE0M4TVdg8/F8KJXExknyupFK25MGlKn3jtUg76ZzjIJaChGwcmR6VPabRfk1VxWJwdu8Lek+abI4Oocz77HFhWD+0FjJOV2asxIwJsO+X31xj1t0mlCDYlx17lSx6213wlH386x+stboesCIXK/Qwf+OkWxIIPAHZSRtbxu5eU2rvMc6gHr6taEl9wpt0HVVaGltkfcjGjhVbDkLCBk3WGFp7aHHyaocpr6uciBvMe9bRlqNYOKTpv2pcKhN6PCVGRF99Z7BJd//hfJE6kUqxrrauADCEkCYHMZ07b alexis@cc-4327d2fe-6f868d489f-5blkg>
+      network_interfaces: myNIC
+      image:
+        offer: CentOS
+        publisher: OpenLogic
+        sku: '7.5' 
+        version: latest

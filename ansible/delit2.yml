@@ -1,0 +1,12 @@
+---
+
+- name: borrar RG
+  hosts: localhost
+  connection: local
+  tasks:
+  - name: Delete a resource group
+    azure_rm_resourcegroup:
+     name: myResourceGroup
+     state: absent
+     force: True
+...

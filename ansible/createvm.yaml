@@ -1,0 +1,23 @@
+---
+
+
+ - name: Creating VM test 
+    hosts: localhost
+    connection: local
+    tasks:
+   - name: Create VM
+     azure_rm_virtualmachine:
+      resource_group: myResourceGroup
+      name: myVM
+      vm_size: Standard_DS1_v2
+      admin_username: azureuser
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: /home/azureuser/.ssh/authorized_keys
+          key_data: <your-key-data>
+      network_interfaces: myNIC
+      image:
+        offer: CentOS
+        publisher: OpenLogic
+        sku: '7.5'
+        version: latest

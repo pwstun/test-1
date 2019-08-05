@@ -1,0 +1,91 @@
+---
+
+- name: Create Azure VM
+  hosts: localhost
+  connection: local
+  tasks:
+  - name: Create resource group
+    azure_rm_resourcegroup:
+      name: myResourceGroup
+      location: eastus
+  - name: Creairtual network
+    azure_rm_virtualnetwork:
+      resource_group: myResourceGroup
+      name: myVnet
+      address_prefixes: "10.0.0.0/16"
+  - name: Add subnet
+    azure_rm_subnet:
+      resource_group: myResourceGroup
+      name: mySubnet
+      address_prefix: "10.0.1.0/24"
+      virtual_network: myVnet
+  - name: Create public IP address
+    azure_rm_publicipaddress:
+      resource_group: myResourceGroup
+      allocation_method: Static
+      name: myPublicIP
+    register: output_ip_address
+  - name: Dump public IP for VM which will be created
+    debug:
+      msg: "The public IP is {{ output_ip_address.state.ip_address }}."
+  - name: Create Network Security Group that allows SSH
+    azure_rm_securitygroup:
+      resource_group: myResourceGroup
+      name: myNetworkSecurityGroup
+      rules:
+        - name: SSH
+          protocol: Tcp
+          destination_port_range: 22
+          access: Allow
+          priority: 1001
+          direction: Inbound
+  - name: Create virtual network interface card
+    azure_rm_networkinterface:
+      resource_group: myResourceGroup
+      name: myNIC
+      virtual_network: myVnet
+      subnet: mySubnet
+      public_ip_name: myPublicIP
+      security_group: myNetworkSecurityGroup
+  - name: Create VM
+    azure_rm_virtualmachine:
+      resource_group: myResourceGroup
+      name: myVM
+      vm_size: Standard_DS1_v2
+      admin_username: alexis
+      ssh_password_enabled: false
+      ssh_public_keys:
+        - path: /home/alexis
+          key_data: <-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA0eyLmG12Y7ttCvS3XNUzcdNzYb5bjiNX9ov/CyXeEtbvK1QM
+QiODyEu8m9hRh7UBLbYa3QuVWqmFUabJTEb1kVBMEWTC7R65Jsh5ucDik5Z2snkf
+LuT9cdLqy9/XNZm/rcjGk0p++H7UX3aREGXx3rQZ4wUrrPXKwl7xsSPg7+QobmpX
+tvAHEmvbkDWR/eGeOL+HUyjbo9iT79FA9KccUunm/MiiHRauY7hvgt7rkVHMJXjJ
+fWycXhOH24VCXAU0BzCMdpSQHu3SexQE073o74kGlN1id+mmivRHoyuCpAQL4vqG
+vjYB/DQgzh8oTOUjiqgG/XgNZb/xKDABYsNZ8QIDAQABAoIBAD97pF+NQs84P+qf
+RNBLHUqf4nW9plxerdw+S/uoEPdrjlpxCV/684Bf/wK2MTmz8E5NkuQj+5+2Qj4G
+DTwG/X5bZRWhfh1NPDrRR5Z4EU0GpJCmdlqtH0QLv7u1zpREEaZRYFPspGcrm7fe
+2FG4MqPhnS59Qs8EabPMGJU0P3Lr5MXOn2a/Ei3F5L7MTC3g8vRLnZtVzD1PCmk8
+TG82jHT+kmRj4mY4yG2sd1eOSJ2p5j9tGaar2L4uwdPJvuVn8Mr7IxpGl9zvRZ5h
+TvPYcpKTpbp/DnBRLLsVgnt0xVA8ADOF98iCggK/WeRPtssJBxwMCyhO8CJ4VlcE
+Ng6I+v0CgYEA/qP/vDU6bwWDeRZ2WEm+DfBDO4amQRZ90DpMxDn3ZFFh610TGfoj
+xPTtAJR+8C3WuwxzDfll9EFEkarMNQo+vg7PLKYuhj9EZWsICZtLxCp0er1dlEe0
+V/cbr+cDaweV+R1UzVZO58WUm2G71fVC8H8kwJNARBw4ZWwkS8rNBwMCgYEA0wtv
+W7FDZYjRkRVvDO5xszhe7KC3dxS7ocXV15SBF9EHIcFKGsspzN4dJTof3DvVBW34
+6vz/zi2h+NTMfvx2E46x+YHDsnvqcUp/KDH02CWAhw+JF/BgvvAy4y7a+zg6wwQw
+VN4TX/LKtQAs4CWy/U9JKMdsze6Z8SP7HDVufvsCgYBUKqT28qkT1UC1n2USnZ1C
+Qi4W2NTPIr4HO53wJjDNadDx2NvddD6qdUJ5NJwYiy40uVK2Rb8bUw91Dn1c8rv2
+WjLEUVGDchoLY6tOcZRDjLzfbQQnZOQJR1ZReAw7LlC1/KnxDRwbo8UQ7ucFO4Ia
+uAvP01wkpydE7s+4dZn7PQKBgQCKPDA5wBdkN0UFoiN2Nez1tlO+7NqfPk5UfVA/
+f/86yWjBfGj8udxsW4R9sN/TksFKaCkmSoeH1i4E3eYAu37f+pSq2IuFqlL62BAI
+FQjKV24jiVKEAqhsCMtcMYGwEbmzqVe7DydjrpWGD1JVk3v1HezOsCmdjc75u1as
+uHbi5wKBgQD2is6RoWDydQE3o4OqLDbLRs14YWLkvKHzqHTC5Wp8lU/q8wFJ6OoV
+NX7j5Z1JQLPWbS98/lkYDjuJaLieb8khO687MXXCwNIBR+EHpvpheAC/QTO5v+ek
+hg+mduOJxi1PwrGllHeMmNWzgC39tJ+3k3cHnc46gcjrkiny0ixjow==
+-----END RSA PRIVATE KEY----->
+      network_interfaces: myNIC
+      image:
+        offer: CentOS
+        publisher: OpenLogic
+        sku: '7.5'
+        version: latest
